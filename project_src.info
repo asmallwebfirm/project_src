@@ -1,4 +1,0 @@
-name = Project Source
-description = Creates Drupal project update XML, backed by any number of VCSs.
-core = 7.x
-package = Development
