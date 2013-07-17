@@ -1,0 +1,251 @@
+<?php
+
+/**
+ * @file
+ * Hooks and functions for the Project Alternate Source module.
+ */
+
+
+/**
+ * Defines the pass-through URL back to Drupal's main project repository.
+ */
+define('PROJECT_SRC_PASSTHROUGH', 'https://updates.drupal.org/release-history');
+
+
+/**
+ * Implements hook_menu().
+ */
+function project_src_menu() {
+  $items['drupal/release-history/%/%'] = array(
+    'title' => 'Alternate Drupal project release history',
+    'delivery callback' => 'project_src_deliver_clean_page',
+    'page callback' => 'project_src_get_project',
+    'page arguments' => array(2, 3),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function project_src_theme($existing, $type, $theme, $path) {
+  $pm_path = drupal_get_path('module', 'project_src');
+
+  // Primary project XML.
+  $items['project_src_xml'] = array(
+    'variables' => array(
+      'title' => '',
+      'short_name' => '',
+      'creator' => '',
+      'api_version' => '',
+      'recommended_major' => '',
+      'supported_majors' => '',
+      'default_major' => '',
+      'project_status' => 'published',
+      'link' => '',
+      'terms' => '',
+      'releases' => '',
+    ),
+    'path' => $pm_path . '/theme',
+    'file' => 'theme.inc',
+    'template' => 'project.xml',
+  );
+
+  // Project releases.
+  $items['project_src_releases'] = array(
+    'path' => $pm_path . '/theme',
+    'file' => 'theme.inc',
+    'function' => 'project_src_theme_releases',
+  );
+
+  // Project release XML.
+  $items['project_src_release'] = array(
+    'variables' => array(
+      'name' => '',
+      'version' => '',
+      'tag' => '',
+      'version_major' => '',
+      'version_patch' => '',
+      'version_extra' => '',
+      'status' => 'published',
+      'terms' => '',
+      'release_link' => '',
+      'download_link' => '',
+      'date' => '',
+      'mdhash' => '',
+      'filesize' => '',
+      'archive_type' => 'tar.gz',
+    ),
+    'path' => $pm_path . '/theme',
+    'file' => 'theme.inc',
+    'template' => 'release.xml',
+  );
+
+  // Project terms template.
+  $items['project_src_terms'] = array(
+    'path' => $pm_path . '/theme',
+    'file' => 'theme.inc',
+    'function' => 'project_src_theme_terms',
+  );
+
+  // Project term template.
+  $items['project_src_term'] = array(
+    'variables' => array(
+      'name' => '',
+      'value' => '',
+    ),
+    'path' => $pm_path . '/theme',
+    'file' => 'theme.inc',
+    'template' => 'term.xml',
+  );
+
+  // Error XML.
+  $items['project_src_xml_error'] = array(
+    'path' => $pm_path . '/theme',
+    'file' => 'theme.inc',
+    'function' => 'project_src_theme_error',
+  );
+
+  return $items;
+}
+
+
+/**
+ * Delivers a page without running through any additional processing.
+ *
+ * @param $page_callback_result
+ *   A string containing the result output of the page.
+ */
+function project_src_deliver_clean_page($page_callback_result) {
+  print $page_callback_result;
+  drupal_page_footer();
+}
+
+
+/**
+ * Menu callback for release-history, returned as XML. This matches the
+ * output of http://updates.drupal.org/release-history/%/%. If it's not a custom
+ * project, we should just get the contents of that URL.
+ *
+ * @param $short_name
+ *   The short name of the project.
+ *
+ * @param $api_version
+ *   The API version for the project (e.g. 7.x).
+ */
+function project_src_get_project($short_name, $api_version) {
+  // Get a list of all declared custom projects to check against.
+  $projects = project_src_get_projects($api_version);
+
+  // If the custom project and version is registered, render its XML.
+  if (isset($projects[$short_name])) {
+    $project = $projects[$short_name];
+    $project_copy = $projects[$short_name];
+
+    // Return releases and terms for each project, then return rendered output.
+    $project['releases'] = module_invoke_all('project_src_releases', $short_name, $api_version, $project);
+    drupal_alter('project_src_releases', $project['releases'], $project_copy);
+    $term_type = 'project';
+    $project['terms'] = module_invoke_all('project_src_terms', $term_type, $short_name, $api_version, $project);
+    drupal_alter('project_src_terms', $project['terms'], $project_copy, $term_type);
+
+    drupal_add_http_header('Content-type', 'text/xml; charset=utf-8');
+    return theme('project_src_xml', $project);
+  }
+  // If it exists but the specified version does not, render the error.
+  elseif (isset($projects[$short_name])) {
+    drupal_add_http_header('Content-type', 'text/xml; charset=utf-8');
+    return theme('project_src_xml_error', array(
+      'short_name' => $short_name,
+      'api_version' => $api_version,
+    ));
+  }
+  // Otherwise, pass through the request to drupal.org and return it.
+  else {
+    $response = drupal_http_request(PROJECT_SRC_PASSTHROUGH . '/' . $short_name . '/' . $api_version);
+
+    foreach ($response->headers as $header => $value) {
+      drupal_add_http_header($header, $value);
+    }
+
+    return $response->data;
+  }
+}
+
+
+/**
+ * Returns an array of custom projects keyed by project short name.
+ *
+ * @param string $api_version
+ *   (Optional) The API version of projects to return.
+ *
+ * @param string $module
+ *   (Optional) The name of the module that declared the project.
+ *
+ * @return array
+ *   If $api_version is specified, an array of projects keyed by project short
+ *   name is returned (or an empty array if the specified $api_version is not
+ *   supported). If no $api_version is specified, projects of all $api_versions
+ *   will be returned. If $module is specified, these projects will be filtered
+ *   down to only those declared by the specified $module.
+ */
+function project_src_get_projects($api_version = NULL, $module = NULL) {
+  // This may be called frequently; we should statically cache the results.
+  $projects = &drupal_static(__FUNCTION__, array());
+
+  if (empty($projects)) {
+    // If a module is provided, only load projects for the specified module.
+    if (!empty($module)) {
+      // Load and allow modifications to Project SRC projects by module.
+      $projects = module_invoke($module, 'project_src_info');
+      $projects = empty($projects) ? array() : $projects;
+      drupal_alter('project_src_info', $projects);
+    }
+    // Otherwise, load all declared projects.
+    else {
+      // Load and allow modifications to Project SRC projects.
+      $projects = module_invoke_all('project_src_info');
+      drupal_alter('project_src_info', $projects);
+    }
+  }
+
+  if (!empty($api_version)) {
+    return isset($projects[$api_version]) ? $projects[$api_version] : array();
+  }
+  else {
+    return $projects;
+  }
+}
+
+
+/**
+ * Implements hook_project_src_terms().
+ *
+ * Provides default term output for projects because it's unlikely that most VCS
+ * backends provide enough metadata through their APIs to provide term info.
+ */
+function project_src_project_src_terms($type, $short_name, $api_version, $info) {
+  $terms = array();
+
+  /*switch ($type) {
+    case 'project':
+      $terms = array(
+        array('Projects', 'Modules'),
+        array('Development status', 'Under active development'),
+      );
+      break;
+
+    case 'release':
+      $terms = array(
+        array('Release type', 'New features'),
+        array('Release type', 'Bug fixes'),
+      );
+      break;
+  }*/
+
+  return $terms;
+}
