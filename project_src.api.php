@@ -1,5 +1,26 @@
 <?php
 
+/**
+ * @file
+ * This file contains no working PHP code; it exists to provide additional
+ * documentation for doxygen as well as to document hooks in the standard Drupal
+ * manner.
+ */
+
+/**
+ * @defgroup project_src Project Source integrations.
+ *
+ * Module integrations with the Project Source module.
+ */
+
+/**
+ * @defgroup project_src_hooks Project Source's hooks.
+ * @{
+ * Hooks that can be implemented by other modules in order to extend the Project
+ * Source module. Note that you should place your hooks in a file of the form
+ * your_module.project_src.inc in your module's root directory.
+ */
+
 
 /**
  * Returns an array of custom project definitions keyed by project short name,
@@ -197,3 +218,8 @@ function hook_project_src_terms_alter(&$terms, $info, $type) {
   // Maybe for some reason, we want to translate the title.
   $projects['7.x']['my_views_fork']['title'] = t('My Views Fork');
 }
+
+
+/**
+ * @}
+ */

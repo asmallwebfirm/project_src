@@ -40,6 +40,9 @@ In an ideal world, your module will be using the above API to integrate with a
 version control repository service or system (like github or gitlab) and its
 API to dynamically generate project and release definitions.
 
+All project_src-related hooks should be placed in a special inc file whose name
+is of the form "my_module.project_src.inc" and located in the root module dir.
+
 For full details, see project_src.api.php.
 
 In your custom projects' .info files, you'll also want to include several
