@@ -32,6 +32,9 @@
  * - title: The human-readable name for the specified project,
  * - short_name: The Drupal project short name for the specified project,
  * - creator: A string representing the project's original author,
+ * - type: A string representing the type of project. One of: project_core,
+     project_distribution, project_module, project_theme, project_theme_engine,
+     or project_translation.
  * - api_version: The Drupal API version supported by the project (e.g. 7.x),
  * - link: A fully qualified URL representing the project page,
  * - project_status: The current project status (e.g. "published"),
@@ -53,6 +56,7 @@ function hook_project_src_info() {
     'title' => 'My Views Fork', 
     'short_name' => 'my_views_fork',
     'creator' => 'notmerlinofchaos',
+    'type' => 'project_module',
     'api_version' => '7.x',
     'project_status' => 'published',
     'link' => 'http://example.com/project/my_views_fork',

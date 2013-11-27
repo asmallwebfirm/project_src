@@ -27,6 +27,7 @@
   <title><?php echo $title; ?></title>
   <short_name><?php echo $short_name; ?></short_name>
   <dc:creator><?php echo $creator; ?></dc:creator>
+  <type><?php echo $type; ?></type>
   <api_version><?php echo $api_version; ?></api_version>
   <recommended_major><?php echo $recommended_major; ?></recommended_major>
   <supported_majors><?php echo $supported_majors; ?></supported_majors>

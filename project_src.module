@@ -59,6 +59,7 @@ function project_src_theme($existing, $type, $theme, $path) {
       'title' => '',
       'short_name' => '',
       'creator' => '',
+      'type' => 'project_module',
       'api_version' => '',
       'recommended_major' => '',
       'supported_majors' => '',
