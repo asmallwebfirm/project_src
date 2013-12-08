@@ -7,6 +7,13 @@
 
 
 /**
+ * Includes private/helpers file. Do not use functions contained here in your
+ * module.
+ */
+require_once(dirname(__FILE__) . '/includes/project_src.private.inc');
+
+
+/**
  * Defines the pass-through URL back to Drupal's main project repository.
  */
 define('PROJECT_SRC_PASSTHROUGH', 'https://updates.drupal.org/release-history');
@@ -24,6 +31,15 @@ function project_src_menu() {
     'file' => 'project_src.pages.inc',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/project-src'] = array(
+    'title' => 'Project Source',
+    'description' => 'Configure options for the Project Source module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('project_src_settings'),
+    'access arguments' => array('administer project src'),
+    'file' => 'includes/project_src.admin.inc',
   );
 
   return $items;
@@ -44,6 +60,20 @@ function project_src_hook_info() {
   );
 
   return array_fill_keys($hooks, array('group' => 'project_src'));
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function project_src_permission() {
+  return array(
+    'administer project src' => array(
+      'title' => t('Administer Project Source'),
+      'description' => t('Perform administration tasks for Project Source'),
+      'restrict access' => TRUE,
+    ),
+  );
 }
 
 
@@ -129,6 +159,12 @@ function project_src_theme($existing, $type, $theme, $path) {
     'function' => 'project_src_theme_error',
   );
 
+  // Admin settings table.
+  $items['project_src_settings_table'] = array(
+    'render element' => 'form',
+    'file' => 'includes/project_src.admin.inc',
+  );
+
   return $items;
 }
 
@@ -154,6 +190,9 @@ function project_src_deliver_clean_page($page_callback_result) {
  * @param string $module
  *   (Optional) The name of the module that declared the project.
  *
+ * @param bool $include_hidden
+ *   (Optional) Whether or not to include projects configured to be hidden.
+ *
  * @return array
  *   If $api_version is specified, an array of projects keyed by project short
  *   name is returned (or an empty array if the specified $api_version is not
@@ -161,9 +200,10 @@ function project_src_deliver_clean_page($page_callback_result) {
  *   will be returned. If $module is specified, these projects will be filtered
  *   down to only those declared by the specified $module.
  */
-function project_src_get_projects($api_version = NULL, $module = NULL) {
+function project_src_get_projects($api_version = NULL, $module = NULL, $include_hidden = FALSE) {
   // This may be called frequently; we should statically cache the results.
   $projects = &drupal_static(__FUNCTION__, array());
+  $settings = variable_get('project_src_project_settings', array());
 
   if (empty($projects)) {
     // If a module is provided, only load projects for the specified module.
@@ -171,12 +211,14 @@ function project_src_get_projects($api_version = NULL, $module = NULL) {
       // Load and allow modifications to Project SRC projects by module.
       $projects = module_invoke($module, 'project_src_info');
       $projects = empty($projects) ? array() : $projects;
+      project_src_apply_settings($projects, $include_hidden);
       drupal_alter('project_src_info', $projects);
     }
     // Otherwise, load all declared projects.
     else {
       // Load and allow modifications to Project SRC projects.
       $projects = module_invoke_all('project_src_info');
+      project_src_apply_settings($projects, $include_hidden);
       drupal_alter('project_src_info', $projects);
     }
   }
