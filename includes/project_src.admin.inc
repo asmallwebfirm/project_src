@@ -76,7 +76,7 @@ function project_src_settings_table_submit($form, &$form_state) {
  *   A form API element renderable by our settings table theme function.
  */
 function project_src_settings_row($project, $settings) {
-    $form['project'] = array(
+  $form['project'] = array(
     '#type' => 'html_tag',
     '#tag' => 'strong',
     '#value' => check_plain($project['title']),
@@ -84,7 +84,7 @@ function project_src_settings_row($project, $settings) {
 
   // Build the options array.
   $options = _project_src_type_to_string();
-  foreach ($options as $key =>&$option) {
+  foreach ($options as $key => &$option) {
     $options[$key] = $option['title'];
   }
 
