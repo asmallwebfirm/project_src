@@ -182,51 +182,80 @@ function project_src_deliver_clean_page($page_callback_result) {
 
 
 /**
- * Returns an array of custom projects keyed by project short name.
+ * Returns an array of custom projects. If an API version is specified, then the
+ * returned array is keyed by project short name. If no API version is given,
+ * the value returned is keyed by API version.
  *
  * @param string $api_version
- *   (Optional) The API version of projects to return.
+ *   (Optional) The API version of projects to return. Projects will be returned
+ *   and keyed by API version.
  *
  * @param string $module
- *   (Optional) The name of the module that declared the project.
+ *   (Optional) The name of the module that declared the project. If no module
+ *   is specified, projects belonging to any module will be returned.
  *
  * @param bool $include_hidden
- *   (Optional) Whether or not to include projects configured to be hidden.
+ *   (Optional) Whether or not to include projects configured to be hidden. By
+ *   default, only projects configured to be visible will be returned.
  *
  * @return array
- *   If $api_version is specified, an array of projects keyed by project short
- *   name is returned (or an empty array if the specified $api_version is not
- *   supported). If no $api_version is specified, projects of all $api_versions
- *   will be returned. If $module is specified, these projects will be filtered
- *   down to only those declared by the specified $module.
+ *   An array of projects if those meeting the above criteria were met, or an
+ *   empty array of none were found. The returned array's keys will appear like
+ *   the following, based on whether or not API version was specified:
+ *   -API version specified: $projects[project_name][definition];
+ *   -API version omitted: $projects[api_version][project_name][definition];
  */
 function project_src_get_projects($api_version = NULL, $module = NULL, $include_hidden = FALSE) {
   // This may be called frequently; we should statically cache the results.
   $projects = &drupal_static(__FUNCTION__, array());
-  $settings = variable_get('project_src_project_settings', array());
+  static $already_ran = array();
+  $all = '-all-';
 
-  if (empty($projects)) {
-    // If a module is provided, only load projects for the specified module.
-    if (!empty($module)) {
-      // Load and allow modifications to Project SRC projects by module.
-      $projects = module_invoke($module, 'project_src_info');
-      $projects = empty($projects) ? array() : $projects;
-      project_src_apply_settings($projects, $include_hidden);
-      drupal_alter('project_src_info', $projects);
+  // Check that we haven't already loaded projects for this module/hidden combo.
+  $key = serialize(array($module, $include_hidden));
+  if (!isset($already_ran[$key])) {
+    $projects[$include_hidden][$all] = array();
+
+    // We must always run module_implements() in order to guarantee all project
+    // source inc files have been lazy loaded; however, if explicitly given a
+    // module, there's no reason to run every single module's implementation.
+    $modules = module_implements('project_src_info');
+    $modules = $module ? array($module) : $modules;
+
+    // Iterate through project_src_info() implementers and store separately.
+    foreach ($modules as $implementer) {
+      // Construct and check the function.
+      $function = $implementer . '_project_src_info';
+      if (function_exists($function)) {
+        // Save the result to the static cache.
+        $projects[$include_hidden][$implementer] = $function();
+
+        // Apply settings.
+        project_src_apply_settings($projects[$include_hidden][$implementer], $include_hidden);
+
+        // Allow modifications to project definitions.
+        drupal_alter('project_src_info', $projects);
+
+        // Ensure that the project is also added to the "all" key.
+        if (is_array($projects[$include_hidden][$implementer])) {
+          $projects[$include_hidden][$all] = array_merge_recursive($projects[$include_hidden][$all], $projects[$include_hidden][$implementer]);
+        }
+      }
     }
-    // Otherwise, load all declared projects.
-    else {
-      // Load and allow modifications to Project SRC projects.
-      $projects = module_invoke_all('project_src_info');
-      project_src_apply_settings($projects, $include_hidden);
-      drupal_alter('project_src_info', $projects);
-    }
+
+    // Mark this module/hidden combo as having already run.
+    $already_ran[$key] = TRUE;
   }
 
-  if (!empty($api_version)) {
-    return isset($projects[$api_version]) ? $projects[$api_version] : array();
+  // Ensures that if no module was specified, it loads projects for all modules.
+  $module = $module ? $module : $all;
+
+  // If an API version was specified, only return those projects
+  if ($api_version) {
+    return isset($projects[$include_hidden][$module][$api_version]) ? $projects[$include_hidden][$module][$api_version] : array();
   }
+  // Otherwise, return all projects keyed by API version.
   else {
-    return $projects;
+    return isset($projects[$include_hidden][$module]) ? $projects[$include_hidden][$module] : array();
   }
 }
