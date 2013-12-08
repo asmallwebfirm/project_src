@@ -22,6 +22,12 @@ function project_src_apply_settings(&$projects, $include_hidden = FALSE) {
       // If the project is meant to be hidden, unset it and continue.
       if (!$include_hidden && isset($settings[$name]['hidden']) && $settings[$name]['hidden']) {
         unset($projects[$api][$name]);
+
+        // If we just unset the last project for this API version, unset it too.
+        if (empty($projects[$api])) {
+          unset($projects[$api]);
+        }
+
         continue;
       }
 
