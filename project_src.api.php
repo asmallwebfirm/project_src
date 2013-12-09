@@ -141,8 +141,8 @@ function hook_project_src_releases($short_name, $api_version, $info) {
   );
 
   // Potentially some other releases...
-  $releases['7.x']['my_views_fork']['7.x-3.1'] = array(...);
-  $releases['6.x']['my_other_module']['6.x-2.1'] = array(...);
+  $releases['7.x']['my_views_fork']['7.x-3.1'] = array(/*...*/);
+  $releases['6.x']['my_other_module']['6.x-2.1'] = array(/*...*/);
 
   $available = isset($releases[$api_version][$short_name]);
   return $available ? $releases[$api_version][$short_name] : array();
@@ -164,7 +164,7 @@ function hook_project_src_releases($short_name, $api_version, $info) {
  */
 function hook_project_src_releases_alter(&$releases, $info) {
   // Maybe for some reason, we want to translate the title.
-  $projects['7.x']['my_views_fork']['title'] = t('My Views Fork');
+  $releases['7.x']['my_views_fork']['title'] = t('My Views Fork');
 }
 
 
@@ -194,7 +194,7 @@ function hook_project_src_releases_alter(&$releases, $info) {
  */
 function hook_project_src_terms($type, $short_name, $api_version, $info) {
   // My Views Fork is a very buggy module; all releases are bug fixes.
-  if ($type == 'release' && $short_name = 'my_views_fork') {
+  if ($type == 'release' && $short_name == 'my_views_fork') {
     return array(
       array('Release type', 'Bug fixes'),
     );
@@ -205,11 +205,8 @@ function hook_project_src_terms($type, $short_name, $api_version, $info) {
 /**
  * Allows you to modify term definitions at runtime.
  *
- * @param array &$releases
- *   An array of releases exactly as described in hook_project_src_releases().
- *   that this is called for all projects and when projects are loaded on a
- *   module-by-module basis. In both cases, they're passed with API version keys
- *   at the top level.
+ * @param array &$terms
+ *   An array of terms as returned by hook_project_src_terms().
  *
  * @param array $info
  *   The $info array for this particular project/API version combination as
@@ -219,8 +216,10 @@ function hook_project_src_terms($type, $short_name, $api_version, $info) {
  *   The type of term being processed (used for context).
  */
 function hook_project_src_terms_alter(&$terms, $info, $type) {
-  // Maybe for some reason, we want to translate the title.
-  $projects['7.x']['my_views_fork']['title'] = t('My Views Fork');
+  // Erase all terms for one particular project.
+  if ($type == 'project' && $info['short_name'] == 'my_views_fork') {
+    $terms = array();
+  }
 }
 
 
@@ -313,11 +312,11 @@ function hook_project_src_settings() {
 function hook_project_src_settings_alter(&$settings, $context, $setting) {
   // Limit reactions to our custom element.
   if ($setting == 'my_custom_element') {
-    $project = $context['project']
+    $project = $context['project'];
     // For the "my_views_fork" project, 7.x version...
     if ($project['short_name'] == 'my_views_fork' && $project['api_version'] == '7.x') {
       // Remove the 1st option, perhaps because it's not valid.
-      unset($settings['element']['#options'][1];
+      unset($settings['element']['#options'][1]);
     }
   }
 }
