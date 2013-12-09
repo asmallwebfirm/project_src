@@ -58,6 +58,7 @@ function project_src_hook_info() {
     'project_src_terms',
     'project_src_terms_alter',
     'project_src_settings',
+    'project_src_settings_alter',
   );
 
   return array_fill_keys($hooks, array('group' => 'project_src'));
