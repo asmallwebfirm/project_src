@@ -14,7 +14,7 @@
  * module weighting.
  */
 function project_src_apply_settings(&$projects, $include_hidden = FALSE) {
-  $settings = variable_get('project_src_project_settings', array());
+  $settings = project_src_get_project_settings();
 
   // Iterate through all projects.
   foreach ($projects as $api => &$project_list) {
@@ -34,6 +34,21 @@ function project_src_apply_settings(&$projects, $include_hidden = FALSE) {
       // Apply the configured project type.
       if (isset($settings[$name]['type'])) {
         $project['type'] = $settings[$name]['type'];
+      }
+
+      // Apply the configured project status.
+      if (isset($settings[$name][$api]['status']) && !empty($settings[$name][$api]['status'])) {
+        $project['project_status'] = $settings[$name][$api]['status'];
+      }
+
+      // Apply the configured recommended majors.
+      if (isset($settings[$name][$api]['recommended_major']) && !empty($settings[$name][$api]['recommended_major'])) {
+        $project['recommended_major'] = $settings[$name][$api]['recommended_major'];
+      }
+
+      // Apply the configured supported majors.
+      if (isset($settings[$name][$api]['supported_majors']) && !empty($settings[$name][$api]['supported_majors'])) {
+        $project['supported_majors'] = implode(',', $settings[$name][$api]['supported_majors']);
       }
     }
   }

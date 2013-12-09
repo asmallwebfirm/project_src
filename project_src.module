@@ -57,6 +57,7 @@ function project_src_hook_info() {
     'project_src_releases_alter',
     'project_src_terms',
     'project_src_terms_alter',
+    'project_src_settings',
   );
 
   return array_fill_keys($hooks, array('group' => 'project_src'));
@@ -258,4 +259,61 @@ function project_src_get_projects($api_version = NULL, $module = NULL, $include_
   else {
     return isset($projects[$include_hidden][$module]) ? $projects[$include_hidden][$module] : array();
   }
+}
+
+
+/**
+ * Returns an array of project settings; a specific project can be specified by
+ * providing a project short name.
+ *
+ * @param string $project_name
+ *   (Optional) The short name of the project whose configurations are desired.
+ *
+ * @return array
+ *   An array of configurations if any were found; an empty array, otherwise.
+ */
+function project_src_get_project_settings($project_name = NULL) {
+  $settings = variable_get('project_src_project_settings', array());
+
+  if ($project_name) {
+    return isset($settings[$project_name]) ? $settings[$project_name] : array();
+  }
+  else {
+    return $settings;
+  }
+}
+
+
+/**
+ * Saves an array of project settings, either as a whole, or for a specified
+ * project based on the project's short name.
+ *
+ * @param $project_name
+ *   The short name of the project whose configuration we should save.
+ *
+ * @param string $setting
+ *   The name of the configuration to set (e.g. "type").
+ *
+ * @param mixed $value
+ *   The value to be saved for the given project and setting.
+ */
+function project_src_set_project_settings($project_name = NULL, $setting, $value) {
+  $settings = project_src_get_project_settings();
+
+  // If a name was specified, simply add/replace the value in the original.
+  if ($project_name) {
+    if ($setting) {
+      $settings[$project_name][$setting] = $value;
+    }
+    else {
+      $settings[$project_name] = $value;
+    }
+  }
+  // Otherwise, the whole array needs to be replaced. This is probably only used
+  // by this module. Would not recommend.
+  else {
+    $settings = $value;
+  }
+
+  variable_set('project_src_project_settings', $settings);
 }

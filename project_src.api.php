@@ -225,5 +225,104 @@ function hook_project_src_terms_alter(&$terms, $info, $type) {
 
 
 /**
+ * Returns an array of Project Source settings definitions.
+ *
+ * A setting definition is a custom configuration that applies globally for all
+ * API versions of a given project (e.g. the type of Drupal extension--module,
+ * theme, theme engine, distro, etc). You can use this hook to define your own
+ * project settings.
+ *
+ * Use project_src_get_project_settings() to load settings. Users will see and
+ * be able to configure these settings at /admin/config/development/project-src.
+ *
+ * Project Source settings definitions should be keyed by setting ID and must
+ * include an "element" and a "scope" attribute. Detailed requirements follow.
+ * - scope: A string that represents the scope for which this variable applies.
+ *   Possible values:
+ *   - project: For settings that apply once for the whole project regardless of
+ *     API version, branches, releases, etc.
+ *   - api_version: For settings that apply once per Drupal API version (e.g.
+ *     6.x or 7.x).
+ * - element: An array structured like any render array element, though probably
+ *   best structured like a Form API element. Some caveats:
+ *   - #title: This will be stripped out when rendering the form element itself,
+ *     but will be used as the column header for the table column.
+ *   - #description: This will be stripped out when rendered within the table.
+ *   - #default_value: If provided, this will be the default value shown on the
+ *     form within the table if no value has been saved yet. If a value has been
+ *     saved, this will be ignored. If no #default_value is provided, it will be
+ *     assumed as NULL. Also note that just because you provide a default value
+ *     here, it doesn't mean that the value will show up when you load settings
+ *     using the project_src_get_project_settings() function. In fact, the ID
+ *     specified may not even appear; sanity check accordingly!
+ * - #weight: (Optional) An arbitrary integer used to order the configuration's
+ *   place along side all other configurations in the table column. Note that
+ *   this element is on the definition itself, not the form element above.
+ *
+ * @return array
+ *   See above for details.
+ *
+ * @see project_src_get_project_settings()
+ * @see project_src_settings_row()
+ */
+function hook_project_src_settings() {
+  // Provide a Project Source project configuration to override the creator.
+  $settings['creator_override'] = array(
+    'scope' => 'project',
+    'element' => array(
+      '#title' => t('Creator override'),
+      '#type' => 'textfield',
+      '#default_value' => 'Not Merlin of Chaos',
+    ),
+    // We want this to be placed at the very left, next to the project name.
+    '#weight' => -100,
+  );
+
+  // Provide a custom element at the API version scope.
+  $settings['my_custom_element'] = array(
+    'scope' => 'api_version',
+    'element' => array(
+      '#title' => t('Custom element'),
+      '#type' => 'select',
+      '#options' => array(1, 2, 3),
+    ),
+  );
+
+  return $settings;
+}
+
+
+/**
+ * Allows you to modify Project Source Settings definitions at runtime.
+ *
+ * @param array $settings
+ *   The settings array for the given setting to be modified.
+ *
+ * @param array $context
+ *   An associative array containing useful contextual information for altering
+ *   the settings definition. Possible keys include:
+ *   - project: An array representing a Project Source project's definition.
+ *   - settings: The existing settings for the given Project settings (if any).
+ *
+ * @param string $setting
+ *   A string representing the ID of the given setting.
+ *
+ * @see project_src_settings_row()
+ * @see hook_project_src_settings()
+ */
+function hook_project_src_settings_alter(&$settings, $context, $setting) {
+  // Limit reactions to our custom element.
+  if ($setting == 'my_custom_element') {
+    $project = $context['project']
+    // For the "my_views_fork" project, 7.x version...
+    if ($project['short_name'] == 'my_views_fork' && $project['api_version'] == '7.x') {
+      // Remove the 1st option, perhaps because it's not valid.
+      unset($settings['element']['#options'][1];
+    }
+  }
+}
+
+
+/**
  * @}
  */
