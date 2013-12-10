@@ -60,6 +60,7 @@ function project_src_project_src_settings() {
       '#type' => 'select',
       '#options' => $type_options,
       '#required' => TRUE,
+      '#default_value' => 'project_module',
     ),
     '#weight' => -10,
   );

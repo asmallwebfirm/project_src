@@ -210,7 +210,7 @@ function project_src_deliver_clean_page($page_callback_result) {
 function project_src_get_projects($api_version = NULL, $module = NULL, $include_hidden = FALSE) {
   // This may be called frequently; we should statically cache the results.
   $projects = &drupal_static(__FUNCTION__, array());
-  static $already_ran = array();
+  $already_ran = &drupal_static(__FUNCTION__ . '_ran', array());
   $all = '-all-';
 
   // Check that we haven't already loaded projects for this module/hidden combo.
@@ -236,7 +236,7 @@ function project_src_get_projects($api_version = NULL, $module = NULL, $include_
         project_src_apply_settings($projects[$include_hidden][$implementer], $include_hidden);
 
         // Allow modifications to project definitions.
-        drupal_alter('project_src_info', $projects);
+        drupal_alter('project_src_info', $projects[$include_hidden][$implementer]);
 
         // Ensure that the project is also added to the "all" key.
         if (is_array($projects[$include_hidden][$implementer])) {

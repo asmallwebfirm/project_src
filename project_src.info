@@ -3,3 +3,5 @@ description = Creates Drupal project update XML, backed by any number of VCSs.
 core = 7.x
 package = Development
 config = admin/config/development/project-src
+
+files[] = project_src.test

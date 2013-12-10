@@ -1,0 +1,5 @@
+name = Project Source Test Module
+description = Test module that implements the Project Source API. Do not enable!
+core = 7.x
+package = Testing
+hidden = TRUE

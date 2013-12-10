@@ -105,8 +105,6 @@ function hook_project_src_info_alter(&$projects) {
  * - release_link: A fully qualified URL representing the release,
  * - download_link: A fully qualified URL representing a packaged archive of the
  *   project,
- * - archive_type: The type of archive, represented as a file extension (e.g
- *   "tar.gz" or "zip"),
  * - filesize: The size, in bytes, of the packaged release archive,
  * - mdhash: The md5 checksum of the packaged release archive.
  *
@@ -135,7 +133,6 @@ function hook_project_src_releases($short_name, $api_version, $info) {
     'status' => 'published',
     'release_link' => 'http://example.com/project/my_views_fork/releases/7.x-3.0',
     'download_link' => 'http://ftp.example.com/files/projects/my_views_fork-7.x-3.0.tar.gz',
-    'archive_type' => 'tar.gz',
     'filesize' => '10132',
     'mdhash' => '675288f8194d9eb34c28f2f7cffab8ad',
   );
@@ -155,16 +152,15 @@ function hook_project_src_releases($short_name, $api_version, $info) {
  * @param array &$releases
  *   An array of releases exactly as described in hook_project_src_releases().
  *   that this is called for all projects and when projects are loaded on a
- *   module-by-module basis. In both cases, they're passed with API version keys
- *   at the top level.
+ *   module-by-module basis.
  *
  * @param array $info
  *   The $info array for this particular project/API version combination as
  *   provided by your hook_project_src_info() implementation (used for context).
  */
 function hook_project_src_releases_alter(&$releases, $info) {
-  // Maybe for some reason, we want to translate the title.
-  $releases['7.x']['my_views_fork']['title'] = t('My Views Fork');
+  // Maybe for some reason, we want to translate the name.
+  $releases['7.x-3.0']['name'] = t('My Views Fork');
 }
 
 
