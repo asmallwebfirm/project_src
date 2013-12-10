@@ -102,8 +102,8 @@ function project_src_settings_row($project, $settings) {
   $collapsible_lib = drupal_get_library('system', 'drupal.collapse');
   foreach (project_src_get_projects(NULL, NULL, TRUE) as $api => $list) {
     if (isset($list[$project['short_name']])) {
-      // Supply proper API version when altering runtime settings definitions.
-      $project['api_version'] = $api;
+      // Supply proper project when altering runtime settings definitions.
+      $project = $list[$project['short_name']];
 
       // Add a fieldset to house all API version-scoped settings.
       $form[$api] = array(
