@@ -23,6 +23,7 @@ define('PROJECT_SRC_PASSTHROUGH', 'https://updates.drupal.org/release-history');
  * Implements hook_menu().
  */
 function project_src_menu() {
+  // Primary release history XML callback.
   $items['drupal/release-history/%/%'] = array(
     'title' => 'Alternate Drupal project release history',
     'delivery callback' => 'project_src_deliver_clean_page',
@@ -33,6 +34,7 @@ function project_src_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  // Primary admin UI.
   $items['admin/config/development/project-src'] = array(
     'title' => 'Project Source',
     'description' => 'Configure options for the Project Source module.',
@@ -40,6 +42,13 @@ function project_src_menu() {
     'page arguments' => array('project_src_settings'),
     'access arguments' => array('administer project src'),
     'file' => 'includes/project_src.admin.inc',
+  );
+
+  // Default local task so other modules can add UIs as local tasks.
+  $items['admin/config/development/project-src/settings'] = array(
+    'title' => 'Global settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
   );
 
   return $items;
