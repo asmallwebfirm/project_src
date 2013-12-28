@@ -232,6 +232,11 @@ function project_src_get_projects($api_version = NULL, $module = NULL, $include_
         // Save the result to the static cache.
         $projects[$include_hidden][$implementer] = $function();
 
+        // Ensure that we always supply an array (in the event nothing returns).
+        if (empty($projects[$include_hidden][$implementer]) && !is_array($projects[$include_hidden][$implementer])) {
+          $projects[$include_hidden][$implementer] = array();
+        }
+
         // Apply settings.
         project_src_apply_settings($projects[$include_hidden][$implementer], $include_hidden);
 
