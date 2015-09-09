@@ -38,7 +38,9 @@ function project_src_theme_releases($vars) {
 
   if (!empty($vars['releases'])) {
     foreach ($vars['releases'] as $release) {
-      $return .= theme('project_src_release', $release);
+      if (is_array($release)) {
+        $return .= theme('project_src_release', $release);
+      }
     }
   }
 
@@ -54,7 +56,9 @@ function project_src_theme_terms($vars) {
 
   if (!empty($vars['terms'])) {
     foreach ($vars['terms'] as $term) {
-      $return .= theme('project_src_term', $term);
+      if (is_array($term)) {
+        $return .= theme('project_src_term', $term);
+      }
     }
   }
 
