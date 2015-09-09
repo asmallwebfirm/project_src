@@ -6,10 +6,10 @@
  */
 function template_preprocess_project_src_xml(&$vars) {
   // Project-wide terms.
-  $vars['terms'] = theme('project_src_terms', $vars['terms']);
+  $vars['terms'] = theme('project_src_terms', $vars);
 
   // Release-specific variables.
-  $vars['releases'] = theme('project_src_releases', $vars['releases']);
+  $vars['releases'] = theme('project_src_releases', $vars);
 }
 
 
@@ -33,11 +33,11 @@ function template_preprocess_project_src_term(&$term) {
 /**
  * Hard function to theme a list of releases.
  */
-function project_src_theme_releases($releases) {
+function project_src_theme_releases($vars) {
   $return = '';
 
-  if (!empty($releases)) {
-    foreach ($releases as $release) {
+  if (!empty($vars['releases'])) {
+    foreach ($vars['releases'] as $release) {
       $return .= theme('project_src_release', $release);
     }
   }
@@ -49,11 +49,11 @@ function project_src_theme_releases($releases) {
 /**
  * Hard function to theme a list of project terms.
  */
-function project_src_theme_terms($terms) {
+function project_src_theme_terms($vars) {
   $return = '';
 
-  if (!empty($terms)) {
-    foreach ($terms as $term) {
+  if (!empty($vars['terms'])) {
+    foreach ($vars['terms'] as $term) {
       $return .= theme('project_src_term', $term);
     }
   }
